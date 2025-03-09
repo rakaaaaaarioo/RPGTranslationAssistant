@@ -1,0 +1,96 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'  # 当推送新的版本标签时触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 获取所有历史记录，以便正确生成版本号
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          if test -f requirements.txt; then pip install -r requirements.txt; fi
+
+      - name: Create directory structure
+        run: |
+          mkdir -p dist
+          mkdir -p dist/RPGTranslationAssistant
+          mkdir -p dist/RPGTranslationAssistant/Works
+          
+          # 检查必要的目录是否存在
+          if (Test-Path -Path "RPGRewriter") {
+            echo "::notice::RPGRewriter directory found"
+            xcopy /E /I /Y RPGRewriter dist\RPGTranslationAssistant\RPGRewriter
+          } else {
+            echo "::warning::RPGRewriter directory not found, creating empty directory"
+            mkdir -p dist/RPGTranslationAssistant/RPGRewriter
+          }
+          
+          if (Test-Path -Path "EasyRPG") {
+            echo "::notice::EasyRPG directory found"
+            xcopy /E /I /Y EasyRPG dist\RPGTranslationAssistant\EasyRPG
+          } else {
+            echo "::warning::EasyRPG directory not found, creating empty directory"
+            mkdir -p dist/RPGTranslationAssistant/EasyRPG
+          }
+          
+          if (Test-Path -Path "RTPCollection") {
+            echo "::notice::RTPCollection directory found"
+            xcopy /E /I /Y RTPCollection dist\RPGTranslationAssistant\RTPCollection
+          } else {
+            echo "::warning::RTPCollection directory not found, creating empty directory"
+            mkdir -p dist/RPGTranslationAssistant/RTPCollection
+          }
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --name RPGTranslationAssistant --noconfirm --clean --onedir --windowed RPGTranslationAssistant.py
+
+      - name: Copy executable
+        run: |
+          xcopy /Y dist\RPGTranslationAssistant\*.* dist\RPGTranslationAssistant\
+
+      - name: Create release zip
+        run: |
+          # 获取标签版本号
+          $VERSION = "${{ github.ref_name }}"
+          $VERSION = $VERSION -replace "v", ""
+          
+          # 创建发布说明文件
+          Set-Content -Path dist\RPGTranslationAssistant\version.txt -Value "版本：$VERSION`n发布日期：$(Get-Date -Format 'yyyy-MM-dd')"
+          
+          # 复制其他必要文件
+          Copy-Item LICENSE dist\RPGTranslationAssistant\
+          Copy-Item README.md dist\RPGTranslationAssistant\
+          
+          # 创建zip文件
+          Compress-Archive -Path dist\RPGTranslationAssistant\* -DestinationPath release.zip -Force
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release.zip
+          name: RPG Maker 翻译助手 ${{ github.ref_name }}
+          body_path: dist/RPGTranslationAssistant/version.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
